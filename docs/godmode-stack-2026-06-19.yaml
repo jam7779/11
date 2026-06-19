@@ -1,0 +1,190 @@
+# Hermes Agent Stack Snapshot
+# Generated: 2026-06-19
+# Source host: WSL Ubuntu (Windows host via /mnt/c)
+# Hermes config: ~/.hermes/config.yaml
+# SQLite DB:    ~/.hermes/sqlite-data/godmode.db
+
+meta:
+  snapshot_date: "2026-06-19"
+  snapshot_host: "WSL Ubuntu"
+  config_path: "~/.hermes/config.yaml"
+  config_version: 30
+  default_model: "MiniMax-M3"
+  default_provider: "minimax-cn"
+
+# ---------------------------------------------------------------------------
+# MCP servers (6 servers, 145 tools total)
+# ---------------------------------------------------------------------------
+mcp_servers:
+
+  memory:
+    transport: http
+    url: "https://mcp.fagor7.com/mcp/"
+    auth: "Bearer ${MARK3D_KEY}"   # env-var reference (value redacted)
+    timeout: 180
+    connect_timeout: 30
+    tool_count: 64
+
+  filesystem:
+    transport: stdio
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "/mnt/c/Users/openc"]
+    env: {}
+    timeout: 60
+    connect_timeout: 30
+    tool_count: 14
+    allowed_roots:
+      - "/mnt/c/Users/openc"
+
+  puppeteer:
+    transport: stdio
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-puppeteer"]
+    env:
+      DISPLAY: ":0"
+      PUPPETEER_LAUNCH_OPTIONS: |
+        {"headless":"new","args":["--no-sandbox","--disable-gpu","--disable-dev-shm-usage"]}
+    timeout: 120
+    connect_timeout: 60
+    tool_count: 9
+
+  github:
+    transport: stdio
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-github"]
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+    timeout: 120
+    connect_timeout: 30
+    supports_parallel_tool_calls: true
+    tool_count: 26
+
+  playwright:
+    transport: stdio
+    command: "npx"
+    args: ["-y", "@playwright/mcp"]
+    timeout: 120
+    connect_timeout: 60
+    env: {}
+    tool_count: 23
+
+  sqlite:
+    transport: stdio
+    command: "/home/ttclaw/.hermes/hermes-agent/venv/bin/python3"
+    args: ["-m", "mcp_server_sqlite", "--db-path", "/home/ttclaw/.hermes/sqlite-data/godmode.db"]
+    timeout: 60
+    connect_timeout: 30
+    tool_count: 9
+    db_path: "/home/ttclaw/.hermes/sqlite-data/godmode.db"
+
+# ---------------------------------------------------------------------------
+# Tool count matrix
+# ---------------------------------------------------------------------------
+tool_count_totals:
+  memory: 64
+  github: 26
+  playwright: 23
+  filesystem: 14
+  puppeteer: 9
+  sqlite: 9
+  total: 145
+
+# ---------------------------------------------------------------------------
+# Agent configuration (top-level + multi-agent delegation)
+# ---------------------------------------------------------------------------
+agent:
+  max_turns: 150
+  gateway_timeout: 1800
+  restart_drain_timeout: 180
+  api_max_retries: 3
+  tool_use_enforcement: "auto"
+  task_completion_guidance: true
+  parallel_tool_call_guidance: true
+  environment_probe: true
+  coding_context: "auto"
+  gateway_timeout_warning: 900
+  clarify_timeout: 600
+  gateway_notify_interval: 180
+  gateway_auto_continue_freshness: 3600
+  image_input_mode: "auto"
+  disabled_toolsets: []
+  verbose: false
+  reasoning_effort: "medium"
+  show_reasoning: false
+  reasoning: "none"
+  personalities_available:
+    - helpful
+    - concise
+    - technical
+    - creative
+    - teacher
+    - kawaii
+    - catgirl
+    - pirate
+    - shakespeare
+    - surfer
+    - noir
+    - uwu
+    - philosopher
+    - hype
+
+# Multi-agent / delegation knobs (sourced from `delegation:` block)
+multi_agent:
+  inherit_mcp_toolsets: true
+  max_iterations: 50
+  child_timeout_seconds: 600
+  max_concurrent_children: 3       # = max_concurrent_delegations
+  max_async_children: 3
+  max_spawn_depth: 2
+  orchestrator_enabled: true
+  subagent_auto_approve: false
+
+# ---------------------------------------------------------------------------
+# SQLite database schema (godmode.db)
+# ---------------------------------------------------------------------------
+sqlite_schema:
+  path: "/home/ttclaw/.hermes/sqlite-data/godmode.db"
+  size_bytes: 16384
+  tables:
+
+    - name: jailbreak_tests
+      row_count: 5
+      sql: |
+        CREATE TABLE jailbreak_tests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            model TEXT NOT NULL,
+            endpoint TEXT,
+            strategy TEXT,
+            query TEXT,
+            score INTEGER,
+            refused BOOLEAN,
+            hedges INTEGER,
+            response_len INTEGER,
+            notes TEXT
+        )
+
+    - name: meta_reports
+      row_count: 1
+      sql: |
+        CREATE TABLE meta_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT,
+            report_path TEXT,
+            gist_url TEXT,
+            desktop_path TEXT,
+            mcp_used TEXT,
+            duration_seconds REAL
+        )
+
+    - name: sqlite_sequence
+      system: true
+
+# ---------------------------------------------------------------------------
+# Notes
+# ---------------------------------------------------------------------------
+notes:
+  - "API keys and bearer tokens are stored as env-var references or redacted."
+  - "Default model api_key is set in config but elided from this snapshot."
+  - "MCP tool counts were enumerated against the running servers (see meta)."
+  - "filesystem MCP roots are the only writable sandbox exposed by the MCP."
